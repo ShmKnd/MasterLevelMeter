@@ -79,7 +79,7 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 
 - OBS メニュー: ツール → Show Master Level Meter (初回ロード時は自動表示)
 - Track ボタン: 対象トラック切替 (Track1..Track6)
-- Streaming uses は 1 秒周期で設定から反映。設定 > 出力 >　配信タブ > 音声トラックで設定しているもの。出力モードが「基本」になっていると表示上"none"になります
+- Streaming uses は 1 秒周期で設定から反映。設定 > 出力 >　配信タブ > 音声トラックで設定しているもの。出力モードが「基本」になっていると"Track1"になります
 - ウィンドウは閉じても hide (非表示) 扱い、再度メニューから復帰
 ---
 ## 備考
@@ -238,7 +238,7 @@ Restart OBS after placing the plugin.
 - OBS menu: Tools → Show Master Level Meter (auto shows first load)
 - Track buttons: choose track (Track1..Track6)
 - “Streaming uses”: updated every second from Output → Streaming settings
-- Shows "none" if Output Mode is “Simple”
+- Shows "Track1" if Output Mode is “Simple”
 - Closing the window hides it; reopen via menu
 ---
 ## Implementation Notes

@@ -132,11 +132,9 @@ static uint32_t get_streaming_mixers_from_settings()
     config_t *cfg = obs_frontend_get_profile_config();
     if (cfg) {
         const char *mode = config_get_string(cfg, "Output", "Mode"); // "Simple" or "Advanced"
-        int trackIndex = 0;
+        int trackIndex = 1; // Simpleモード時はTrack1
         if (mode && strcmp(mode, "Advanced") == 0) {
             trackIndex = (int)config_get_int(cfg, "AdvOut", "TrackIndex");
-        } else {
-            trackIndex = (int)config_get_int(cfg, "Output", "TrackIndex");
         }
         if (trackIndex >= 1 && trackIndex <= 6) {
             mask = (1u << (trackIndex - 1));
