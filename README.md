@@ -41,7 +41,7 @@ Master の任意トラック (Track1..Track6) のメーター表示と、配信�
 ## 【開発者向け】ビルド方法 
 -Cmake関連ファイルは[obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate) をベースにしています。
 
-### Typical macOS Build
+### macOS Build
 ```
 mkdir -p build && cd build
 cmake -G "Xcode" ..
@@ -52,12 +52,14 @@ schemeをReleaseに変更してGUIでビルドしてください.
 
   
 
-### Windows (PowerShell)!!!調整中!!!
+### Windows (PowerShell)
 ```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DQt6_DIR="C:/Qt/6.6.2/msvc2019_64/lib/cmake/Qt6" -DCMAKE_PREFIX_PATH="C:/obs-studio/build/install"
-cmake --build build --config Release
-cmake --install build --config Release
+mkdir -p build
+cd build
+cmake .. -G "Visual Studio 17 2022" 
 ```
+生成された.slnを開き
+Releaseに変更してビルドしてください.
 > Ensure `OBS::libobs` is discoverable (either installed to a prefix in `CMAKE_PREFIX_PATH` or specify `-DLIBOBS_ROOT=/path/to/obs/install` if template supports it).
 ---
 ## インストール方法
@@ -114,10 +116,13 @@ If you bundle Qt frameworks, include LGPLv3 text and allow replacement.
 ## Q&A
 - OBSのバージョンは？
     - OBS 29.0 以降を想定しています (Qt6 / C++17 必須)。
+    - Windows OBS 29.1.3/31.1.2で動作確認済み
+    - macOS 14.6 & OBS 31.1.2(Apple Silicon)で動作確認済み
+    - macOS 15.3 & OBS 31.1.2(Intel)で動作確認済み *ただしIntel Build
 
 - macOSのバージョンは？
     - macOS 10.15 (Catalina) 以降を想定しています (Qt6 / C++17 必須)。
-    - Intel Macはサポートしません。多分動くと思うけど。
+    - Intel Macは正式サポートしません。多分動くと思うけど。
 
 - windowsのバージョンは？
     - Windows 10 以降を想定しています (Qt6 / C++17 必須)。
@@ -208,14 +213,14 @@ open the generated `.xcodeproj` in Xcode,
 set the scheme to **Release**,  
 and build from Xcode GUI.
   
-### Windows (PowerShell) (Work in Progress)
+### Windows (PowerShell)
 ```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
--DQt6_DIR="C:/Qt/6.6.2/msvc2019_64/lib/cmake/Qt6" `
--DCMAKE_PREFIX_PATH="C:/obs-studio/build/install"
-cmake --build build --config Release
-cmake --install build --config Release
+mkdir -p build
+cd build
+cmake .. -G "Visual Studio 17 2022" 
 ```
+open the generated `.sln` in VisualStudio,  
+set to **Release**, and build.
 > Ensure `OBS::libobs` is discoverable (add its install prefix to `CMAKE_PREFIX_PATH` or use `-DLIBOBS_ROOT=...` if supported).
 ---
 
@@ -277,6 +282,9 @@ See `LICENSE` for full texts.
 ## Q&A
 - Required OBS?
     - OBS 29.0+ (Qt6 / C++17)
+    - Tested on Windows OBS 29.1.3/31.1.2
+    - Tested on macOS 14.6 & OBS 31.1.2 (Apple Silicon)
+    - Tested on macOS 15.3 & OBS 31.1.2 (Intel) *Intel Build only
 
 - macOS version?
     - 10.15+ (Catalina or later)
