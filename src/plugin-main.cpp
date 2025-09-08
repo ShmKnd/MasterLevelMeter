@@ -145,7 +145,7 @@ static uint32_t get_streaming_mixers_from_settings()
     if (mask == 0) {
         obs_output_t *out = obs_frontend_get_streaming_output();
         if (out) {
-            mask = obs_output_get_mixers(out);
+            mask = static_cast<uint32_t>(obs_output_get_mixers(out));
             obs_output_release(out);
         }
     }
@@ -256,16 +256,21 @@ void obs_module_unload(void) {
         delete g_updateTimer;
         g_updateTimer = nullptr;
     }
+    // audio_output_disconnectはg_audioが有効かつg_connectedの時のみ
     if (g_connected && g_audio) {
-        audio_output_disconnect(g_audio, g_mixIdx, audio_callback, nullptr);
+        // OBSのaudioサブシステムが既にシャットダウンしている場合は呼ばない
+        if (obs_get_audio()) {
+            audio_output_disconnect(g_audio, g_mixIdx, audio_callback, nullptr);
+        }
         g_connected = false;
         g_audio = nullptr;
     }
     if (g_meterWidget) {
-        // 現在のジオメトリを保存
+        // QWidgetのdeleteはUIスレッドでのみ行う
+        if (g_meterWidget->isVisible())
+            g_meterWidget->close();
         QSettings settings("ha_kondo", "level_meter_plugin");
         settings.setValue("window/geometry", g_meterWidget->saveGeometry());
-        g_meterWidget->close();
         delete g_meterWidget;
         g_meterWidget = nullptr;
     }
