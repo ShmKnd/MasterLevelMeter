@@ -64,7 +64,7 @@ if(APPLE)
       BUNDLE TRUE
       BUNDLE_EXTENSION "plugin"
   )
-
+endif()
 # 出力先（ユーザー環境）
 #  set(OBS_USER_PLUGIN_DIR "$ENV{HOME}/Library/Application Support/obs-studio/plugins")
 #  set(PLUGIN_BUNDLE_DIR "${OBS_USER_PLUGIN_DIR}/$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.plugin")
@@ -77,4 +77,6 @@ if(APPLE)
 #    COMMENT "Installing plugin bundle to ${PLUGIN_BUNDLE_DIR}"
 #  )
 
+if(WIN32)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES)
 endif()
