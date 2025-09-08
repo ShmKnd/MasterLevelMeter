@@ -10,7 +10,7 @@ Master の任意トラック (Track1..Track6) のメーター表示と、配信�
 - Dual-channel (L/R) メータ:
 - RMS
 - Peak
-- Momentary LUFS (400ms ITU-R BS.1770 K-weighted 処理)
+- Short LUFS (3秒 ITU-R BS.1770 K-weighted 処理)
 - K-weighting フィルタ:
 - 二段ハイパス (60Hz) + High-shelf (+4 dB @ ~1.7 kHz) 実装
 - -23 / -18 LUFS 強調目盛り
@@ -21,14 +21,13 @@ Master の任意トラック (Track1..Track6) のメーター表示と、配信�
 ### Audio Flow
 1. OBS の `audio_output_connect` 経由で planar float オーディオフレーム取得
 2. `audio_callback` で選択 Mix のバッファを `LevelCalc::process()` へ
-3. K-weighting & サブブロック (100ms hop / 400ms window) 処理
+3. K-weighting & サブブロック（100ms hop / 3000ms window）処理
 4. Qt UI (約 60fps タイマ) が `updateLevelsLR()` を呼び内部状態を更新 → 再描画
 
   
 
-### Loudness (Momentary / Integrated)
-- Momentary: 400ms ウィンドウ平均エネルギー (ch 合算) → -0.691 オフセット
-- Integrated: EBU R128 二段ゲート (絶対 -70 LUFS, 相対 -10 LU) の単純実装
+### Loudness (Short)
+- Short: 3000ms ウィンドウ平均エネルギー（ch 合算）→ -0.691 オフセット
 
 ---
 ## Qt 6 Usage
@@ -84,7 +83,7 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 ---
 ## 備考
 - 音声コールバックは最小限計算 (K-weighting + accumulations)
-- 400ms window / 100ms hop → モーメンタリ計算コストは制御可能
+- 3000ms window / 100ms hop
 - Atomic 変数で UI スレッドとのロックレス共有（OBS main/Qt GUI thread）
 ---
 
@@ -107,7 +106,6 @@ If you bundle Qt frameworks, include LGPLv3 text and allow replacement.
 - ウィンドウサイズと表示トラックを、OBSを閉じても保存できるように`QSettings` (ローカルのOSに依存した保存領域)のみを使用します。
 ---
 ## ロードマップ (やりたいこと・アイディア)
-- EBU R128 Short-Term (3s)
 - トゥルーピーク対応
 - スキン・カラーテーマの対応
 - ドック対応（これが難しいんだ）
@@ -173,7 +171,7 @@ It also visualizes which audio tracks are currently selected in the streaming (O
 - Dual-channel (L/R) meters:
 - RMS
 - Peak
-- Momentary LUFS (400 ms ITU-R BS.1770 K-weighted)
+- Short LUFS (3000 ms ITU-R BS.1770 K-weighted)
 - K-weighting filter:
 - Two-stage high-pass (60 Hz) + high-shelf (+4 dB @ ~1.7 kHz)
 - Emphasis ticks at -23 / -18 LUFS
@@ -183,12 +181,12 @@ It also visualizes which audio tracks are currently selected in the streaming (O
 ## Audio Flow
 1. Obtain planar float audio frames via `audio_output_connect`
 2. The selected mix buffer is pushed to `LevelCalc::process()` inside `audio_callback`
-3. K-weighting & sub-block processing (100 ms hop / 400 ms window)
+3. K-weighting & sub-block processing (100 ms hop / 3000 ms window)
 4. A ~60 fps Qt timer calls `updateLevelsLR()` → triggers repaint
 
-### Loudness (Momentary / Integrated)
-- Momentary: 400 ms sliding window energy (summed channels) with -0.691 offset
-- Integrated: EBU R128 dual-gate (absolute -70 LUFS, relative -10 LU) planned / extendable
+### Loudness (Short)
+- Short: 3000 ms sliding window energy (summed channels) with -0.691 offset
+
 ---
 ## Qt 6 Usage
 - Modules: Core / Gui / Widgets
@@ -197,6 +195,7 @@ It also visualizes which audio tracks are currently selected in the streaming (O
 - Dynamic linking (LGPLv3 compliance). Static linking discouraged due to extra obligations
 - Prefer official Qt SDK (or Homebrew `brew install qt` on macOS) over ad‑hoc stripped deps
 ---
+
 ## Build (Developer Notes)
 CMake logic based on [obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)
 
@@ -243,7 +242,7 @@ Restart OBS after placing the plugin.
 ---
 ## Implementation Notes
 - Audio callback: minimal K-weight + accumulations only
-- 400 ms window / 100 ms hop keeps cost low
+- 3000 ms window / 100 ms hop keeps cost low
 - Lock-free sharing between audio and UI threads via atomic variables
 ---
 ## License

@@ -1,16 +1,23 @@
 #include "level_calc.h"
 #include <cmath>
 #include <algorithm>
+#include <deque>
+
+// Short LUFS用ウィンドウ長（100ms×30=3秒）
+static constexpr size_t kShortWindowBlocks = 30;
 
 LevelCalc::LevelCalc()
     : rms_(0.0f),
       peak_(0.0f),
       lufs_m_(-120.0f),
+      lufs_short_(-120.0f),
+      smoothed_lufs_short_(-120.0f),
       sampleRate_(48000) {
     // 初期化
     for (auto &v : rms_ch_) v.store(0.0f, std::memory_order_relaxed);
     for (auto &v : peak_ch_) v.store(0.0f, std::memory_order_relaxed);
     for (auto &v : lufs_m_ch_) v.store(-120.0f, std::memory_order_relaxed);
+    for (auto &v : lufs_short_ch_) v.store(-120.0f, std::memory_order_relaxed);
 }
 
 LevelCalc::~LevelCalc() {}
@@ -31,11 +38,16 @@ void LevelCalc::setChannels(size_t channels) {
     sumSquaresHop_.assign(channels_, 0.0);
     recentSubblocks_.assign(channels_, {});
     rollingSubSum_.assign(channels_, 0.0);
+    recentSubblocksShort_.assign(channels_, {});
+    rollingSubSumShort_.assign(channels_, 0.0);
     for (size_t ch = 0; ch < kMaxChannels; ++ch) {
         rms_ch_[ch].store(0.0f, std::memory_order_relaxed);
         peak_ch_[ch].store(0.0f, std::memory_order_relaxed);
         lufs_m_ch_[ch].store(-120.0f, std::memory_order_relaxed);
+        lufs_short_ch_[ch].store(-120.0f, std::memory_order_relaxed);
     }
+    lufs_short_.store(-120.0f, std::memory_order_relaxed);
+    smoothed_lufs_short_ = -120.0f;
     resetBlockAccumulators();
 }
 
@@ -50,9 +62,15 @@ void LevelCalc::resetBlockAccumulators() {
     sumSquaresHop_.assign(channels_, 0.0);
     recentSubblocks_.assign(channels_, {});
     rollingSubSum_.assign(channels_, 0.0);
+    recentSubblocksShort_.assign(channels_, {});
+    rollingSubSumShort_.assign(channels_, 0.0);
     lufs_m_.store(-120.0f, std::memory_order_relaxed);
-    for (size_t ch = 0; ch < channels_; ++ch)
+    lufs_short_.store(-120.0f, std::memory_order_relaxed);
+    smoothed_lufs_short_ = -120.0f;
+    for (size_t ch = 0; ch < channels_; ++ch) {
         lufs_m_ch_[ch].store(-120.0f, std::memory_order_relaxed);
+        lufs_short_ch_[ch].store(-120.0f, std::memory_order_relaxed);
+    }
 }
 
 void LevelCalc::updateFilterCoeffs() {
@@ -172,9 +190,46 @@ void LevelCalc::process(float **data, uint32_t frames, size_t channels) {
                 }
                 // Integrated の蓄積・ゲート処理は削除
             }
+            // --- Short LUFS用 ---
+            for (size_t ch = 0; ch < channels_; ++ch) {
+                double ms = (hopSamples_ > 0)
+                                ? (sumSquaresHop_[ch] / static_cast<double>(hopSamples_))
+                                : 0.0;
+                if (recentSubblocksShort_[ch].size() == kShortWindowBlocks) {
+                    rollingSubSumShort_[ch] -= recentSubblocksShort_[ch].front();
+                    recentSubblocksShort_[ch].pop_front();
+                }
+                recentSubblocksShort_[ch].push_back(ms);
+                rollingSubSumShort_[ch] += ms;
+            }
+            // --- Short LUFS計算 ---
+            bool haveShortWindow = true;
+            for (size_t ch = 0; ch < channels_; ++ch) {
+                if (recentSubblocksShort_[ch].size() < kShortWindowBlocks) { haveShortWindow = false; break; }
+            }
+            if (haveShortWindow) {
+                double energySum = 0.0;
+                for (size_t ch = 0; ch < channels_; ++ch) {
+                    energySum += (rollingSubSumShort_[ch] / static_cast<double>(kShortWindowBlocks));
+                }
+                const double offset = -0.691;
+                double lufs_short = offset + 10.0 * std::log10(std::max(energySum, 1e-12));
+                lufs_short_.store(static_cast<float>(lufs_short), std::memory_order_relaxed);
+                for (size_t ch = 0; ch < channels_; ++ch) {
+                    double eCh = rollingSubSumShort_[ch] / static_cast<double>(kShortWindowBlocks);
+                    double lufs_short_ch = offset + 10.0 * std::log10(std::max(eCh, 1e-12));
+                    lufs_short_ch_[ch].store(static_cast<float>(lufs_short_ch), std::memory_order_relaxed);
+                }
+            }
             hopSampleCount_ = 0;
         }
     }
+    // --- LUFS Short値のスムージング ---
+    // IIR: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+    float lufs_short_now = lufs_short_.load(std::memory_order_relaxed);
+    float alpha = 0.07f; // RMS/Peakと同等の滑らかさに近づける（必要に応じて調整）
+    if (smoothed_lufs_short_ < -100.0f) smoothed_lufs_short_ = lufs_short_now; // 初期化
+    else smoothed_lufs_short_ = alpha * lufs_short_now + (1.0f - alpha) * smoothed_lufs_short_;
 
     float denom = static_cast<float>(frames) * static_cast<float>(channels_);
     if (denom <= 0.0f) denom = 1.0f;
@@ -214,4 +269,10 @@ float LevelCalc::getRMSCh(size_t ch) const {
 float LevelCalc::getPeakCh(size_t ch) const {
     if (ch >= channels_) return 0.0f;
     return peak_ch_[ch].load(std::memory_order_relaxed);
+}
+float LevelCalc::getLUFSShort() const { return lufs_short_.load(std::memory_order_relaxed); }
+float LevelCalc::getSmoothedLUFSShort() const { return smoothed_lufs_short_; }
+float LevelCalc::getLUFSShortCh(size_t ch) const {
+    if (ch >= channels_) return -120.0f;
+    return lufs_short_ch_[ch].load(std::memory_order_relaxed);
 }

@@ -34,6 +34,10 @@ public:
     // Momentary (400ms)
     float getLUFSMomentary() const;
     float getLUFSMomentaryCh(size_t ch) const;
+    // Short (3sec) LUFS
+    float getLUFSShort() const;
+    float getSmoothedLUFSShort() const;
+    float getLUFSShortCh(size_t ch) const;
 
 private:
     static constexpr size_t kMaxChannels = 8;
@@ -51,6 +55,13 @@ private:
     // Momentary (400ms) LUFS（全体 & ch別）
     std::atomic<float> lufs_m_;
     std::array<std::atomic<float>, kMaxChannels> lufs_m_ch_{};
+
+    // Short (3秒) LUFS
+    std::atomic<float> lufs_short_;
+    std::array<std::atomic<float>, kMaxChannels> lufs_short_ch_{};
+    float smoothed_lufs_short_ = -120.0f;
+    std::vector<std::deque<double>> recentSubblocksShort_;
+    std::vector<double> rollingSubSumShort_;
 
     std::atomic<uint32_t> sampleRate_;
     size_t channels_ = 0;
