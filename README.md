@@ -1,6 +1,6 @@
 # Master Level Meter (OBS Plugin)
 
-音声レベル表示 (RMS / Peak / Momentary LUFS) を行う OBS Studio 用フローティング・ウィンドウ・プラグインです。
+音声レベル表示 (RMS / Peak / Short LUFS) を行う OBS Studio 用フローティング・ウィンドウ・プラグインです。
 
 Master の任意トラック (Track1..Track6) のメーター表示と、配信設定で使用される音声マスタートラックの音量が見れるようになります。
 
