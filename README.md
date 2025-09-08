@@ -5,6 +5,30 @@
 Master の任意トラック (Track1..Track6) のメーター表示と、配信設定で使用される音声マスタートラックの音量が見れるようになります。
 
 ---
+## インストール方法
+On macOS:
+```
+~/Library/Application Support/obs-studio/plugins/MasterLevelMeter.plugin/
+```
+
+On Windows:
+```
+C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
+```
+未確認ですが、Streamlabs OBS でも同様の場所に配置すれば動作すると思われますが動作保証しません。
+**該当場所にdll,pluginを配置後、OBSを再起動してください。**
+
+---
+## 使い方
+
+- OBS メニュー: ツール → Show Master Level Meter (初回ロード時は自動表示)
+- Track ボタン: 対象トラック切替 (Track1..Track6)
+- Streaming uses は 1 秒周期で設定から反映。設定 > 出力 >　配信タブ > 音声トラックで設定しているもの。出力モードが「基本」になっていると"Track1"になります
+- ウィンドウは閉じても hide (非表示) 扱い、再度メニューから復帰
+---
+
+
+---
 ## 機能
 - Master Track1..Track6 を流れる信号の表示
 - Dual-channel (L/R) メータ:
@@ -62,27 +86,7 @@ cmake .. -G "Visual Studio 17 2022"
 Releaseに変更してビルドしてください.
 > Ensure `OBS::libobs` is discoverable (either installed to a prefix in `CMAKE_PREFIX_PATH` or specify `-DLIBOBS_ROOT=/path/to/obs/install` if template supports it).
 ---
-## インストール方法
-On macOS:
-```
-~/Library/Application Support/obs-studio/plugins/MasterLevelMeter.plugin/
-```
 
-On Windows:
-```
-C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
-```
-未確認ですが、Streamlabs OBS でも同様の場所に配置すれば動作すると思われますが動作保証しません。
-**該当場所にdll,pluginを配置後、OBSを再起動してください。**
-
----
-## 使い方
-
-- OBS メニュー: ツール → Show Master Level Meter (初回ロード時は自動表示)
-- Track ボタン: 対象トラック切替 (Track1..Track6)
-- Streaming uses は 1 秒周期で設定から反映。設定 > 出力 >　配信タブ > 音声トラックで設定しているもの。出力モードが「基本」になっていると"Track1"になります
-- ウィンドウは閉じても hide (非表示) 扱い、再度メニューから復帰
----
 ## 備考
 - 音声コールバックは最小限計算 (K-weighting + accumulations)
 - 3000ms window / 100ms hop
@@ -168,7 +172,30 @@ If you bundle Qt frameworks, include LGPLv3 text and allow replacement.
 A floating window plugin for OBS Studio that displays audio levels: RMS / Peak / Momentary LUFS for any Master track (Track1..Track6).
 
 It also visualizes which audio tracks are currently selected in the streaming (Output) settings.
-  
+
+---
+## Installation
+macOS:
+```
+~/Library/Application Support/obs-studio/plugins/MasterLevelMeter.plugin/
+```
+
+Windows:
+```
+C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
+```
+Restart OBS after placing the plugin.
+(Other Qt6-based forks such as Streamlabs OBS may work, unverified.)
+
+---
+## Usage
+- OBS menu: Tools → Show Master Level Meter (auto shows first load)
+- Track buttons: choose track (Track1..Track6)
+- “Streaming uses”: updated every second from Output → Streaming settings
+- Shows "Track1" if Output Mode is “Simple”
+- Closing the window hides it; reopen via menu
+---
+
 ---  
 
 ## Features
@@ -224,27 +251,7 @@ set to **Release**, and build.
 > Ensure `OBS::libobs` is discoverable (add its install prefix to `CMAKE_PREFIX_PATH` or use `-DLIBOBS_ROOT=...` if supported).
 ---
 
-## Installation
-macOS:
-```
-~/Library/Application Support/obs-studio/plugins/MasterLevelMeter.plugin/
-```
 
-Windows:
-```
-C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
-```
-Restart OBS after placing the plugin.
-(Other Qt6-based forks such as Streamlabs OBS may work, unverified.)
-
----
-## Usage
-- OBS menu: Tools → Show Master Level Meter (auto shows first load)
-- Track buttons: choose track (Track1..Track6)
-- “Streaming uses”: updated every second from Output → Streaming settings
-- Shows "Track1" if Output Mode is “Simple”
-- Closing the window hides it; reopen via menu
----
 ## Implementation Notes
 - Audio callback: minimal K-weight + accumulations only
 - 3000 ms window / 100 ms hop keeps cost low
