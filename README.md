@@ -215,7 +215,7 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 Restart OBS after placing the plugin.
 (Other Qt6-based forks such as Streamlabs OBS may work, unverified.)
 
-##IMPORTANT
+## for Mac User IMPORTANT note
 Troubleshooting on macOS: 
 "Plugin cannot be opened because Apple cannot check it for malicious software"
 
