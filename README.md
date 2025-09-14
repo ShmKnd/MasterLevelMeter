@@ -18,6 +18,35 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 未確認ですが、Streamlabs OBS でも同様の場所に配置すれば動作すると思われますが動作保証しません。
 **該当場所にdll,pluginを配置後、OBSを再起動してください。**
 
+##Macユーザーへ【重要】
+「Appleがマルウェアの有無を確認できないため、プラグインを開けません」というエラーについて。
+
+macOSにMasterLevelMeter.pluginをインストールする際、次のような警告が表示される場合があります：
+
+「MasterLevelMeter.plugin」は、Appleがマルウェアの有無を確認できないため開けません。
+
+これは、プラグインがApple Developer Programで署名されていないためです。
+信頼できるソースからのものである場合、安全に使用できます。
+プラグインを許可するには以下の手順に従ってください：
+
+1. プラグインをインストールする
+
+2. OBSを起動する
+* macOSによってプラグインがブロックされ、警告ダイアログが表示されます。
+ダイアログを「OK」で閉じます。
+
+3. システム設定でプラグインを許可する
+システム設定 → プライバシーとセキュリティを開きます。
+
+以下のようなメッセージが表示されるまでスクロールします：
+「MasterLevelMeter.plugin は、確認済みの開発者からのものではないためブロックされました。」
+
+「それでも許可」をクリックします。
+
+4. OBSを再起動
+次回OBSを起動すると、プラグインを本当に開くか確認されます。
+「開く」をクリックします。以降、プラグインは自動的に読み込まれます。
+
 ---
 ## 使い方
 
@@ -185,6 +214,35 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 ```
 Restart OBS after placing the plugin.
 (Other Qt6-based forks such as Streamlabs OBS may work, unverified.)
+
+##IMPORTANT
+Troubleshooting on macOS: 
+"Plugin cannot be opened because Apple cannot check it for malicious software"
+
+When you install MasterLevelMeter.plugin on macOS, you may see a warning such as:
+
+“MasterLevelMeter.plugin” can’t be opened because Apple cannot check it for malicious software.
+
+This happens because the plugin is not signed with the Apple Developer Program.
+It is safe to use if you trust the source. Follow these steps to allow the plugin:
+
+1.Install the plugin
+
+2.Launch OBS
+*The plugin will be blocked by macOS and you will see a warning dialog.
+Close the dialog with OK.
+
+3.Allow the plugin in System Settings
+Open System Settings → Privacy & Security.
+
+Scroll down until you see a message like:
+“MasterLevelMeter.plugin was blocked because it is not from an identified developer.”
+
+Click Allow Anyway.
+
+4.Restart OBS
+The next time you launch OBS, you will be asked if you really want to open the plugin.
+Click Open. From now on, the plugin will load automatically.
 
 ---
 ## Usage
