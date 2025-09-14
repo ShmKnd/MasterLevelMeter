@@ -225,11 +225,31 @@ void LevelCalc::process(float **data, uint32_t frames, size_t channels) {
         }
     }
     // --- LUFS Short値のスムージング ---
-    // IIR: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
     float lufs_short_now = lufs_short_.load(std::memory_order_relaxed);
-    float alpha = 0.07f; // RMS/Peakと同等の滑らかさに近づける（必要に応じて調整）
-    if (smoothed_lufs_short_ < -100.0f) smoothed_lufs_short_ = lufs_short_now; // 初期化
-    else smoothed_lufs_short_ = alpha * lufs_short_now + (1.0f - alpha) * smoothed_lufs_short_;
+    float alpha_short = 0.15f;
+    if (lufs_short_now < -100.0f) {
+        // まだ十分なデータが溜まっていない場合は、momentary値で初期化
+        lufs_short_now = lufs_m_.load(std::memory_order_relaxed);
+    }
+    if (smoothed_lufs_short_ < -100.0f) smoothed_lufs_short_ = lufs_short_now;
+    else smoothed_lufs_short_ = alpha_short * lufs_short_now + (1.0f - alpha_short) * smoothed_lufs_short_;
+    // --- チャンネルごとのLUFS Shortスムージング ---
+    for (size_t ch = 0; ch < channels_; ++ch) {
+        float lufs_short_ch_now = lufs_short_ch_[ch].load(std::memory_order_relaxed);
+        if (lufs_short_ch_now < -100.0f) {
+            lufs_short_ch_now = lufs_m_ch_[ch].load(std::memory_order_relaxed);
+        }
+        if (smoothed_lufs_short_ch_[ch] < -100.0f) smoothed_lufs_short_ch_[ch] = lufs_short_ch_now;
+        else smoothed_lufs_short_ch_[ch] = alpha_short * lufs_short_ch_now + (1.0f - alpha_short) * smoothed_lufs_short_ch_[ch];
+    }
+
+    // --- LUFS Momentary値のスムージング ---
+    float lufs_m_now = lufs_m_.load(std::memory_order_relaxed);
+    static float smoothed_lufs_m = -120.0f;
+    float alpha_m = 0.15f; // RMS/Peakと同等の滑らかさに調整
+    if (smoothed_lufs_m < -100.0f) smoothed_lufs_m = lufs_m_now;
+    else smoothed_lufs_m = alpha_m * lufs_m_now + (1.0f - alpha_m) * smoothed_lufs_m;
+    // 必要に応じてgetterを追加してUIで利用可能に
 
     float denom = static_cast<float>(frames) * static_cast<float>(channels_);
     if (denom <= 0.0f) denom = 1.0f;
@@ -275,4 +295,8 @@ float LevelCalc::getSmoothedLUFSShort() const { return smoothed_lufs_short_; }
 float LevelCalc::getLUFSShortCh(size_t ch) const {
     if (ch >= channels_) return -120.0f;
     return lufs_short_ch_[ch].load(std::memory_order_relaxed);
+}
+float LevelCalc::getSmoothedLUFSShortCh(size_t ch) const {
+    if (ch >= channels_) return -120.0f;
+    return smoothed_lufs_short_ch_[ch];
 }

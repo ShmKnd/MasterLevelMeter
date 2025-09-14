@@ -16,7 +16,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE("level-meter-plugin", "en-US")
 // 追加: モジュール名/説明
 const char *obs_module_name(void)
 {
-    return "Level Meter (dBFS)";
+    return "Master Level Meter";
 }
 
 const char *obs_module_description(void)
@@ -154,11 +154,12 @@ static uint32_t get_streaming_mixers_from_settings()
 }
 
 bool obs_module_load(void) {
-    // UI
-    g_meterWidget = new MeterWidget();
+    // OBSのメインウィンドウを親に指定
+    QWidget *main_window = (QWidget *)obs_frontend_get_main_window();
+    g_meterWidget = new MeterWidget(main_window);
     g_meterWidget->setWindowTitle("Master Level Meter");
-    // フローティング&前面
-    g_meterWidget->setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    // ドックとしてOBSに追加
+    obs_frontend_add_dock_by_id("LevelMeterDock", "Master Level Meter", g_meterWidget);
 
     // シグナル: UIドロップダウンからのミックス変更
     QObject::connect(g_meterWidget, &MeterWidget::mixIndexChanged, [](int idx){
@@ -175,10 +176,11 @@ bool obs_module_load(void) {
         init.setHeight(init.height() + 48); // さらに余裕
         g_meterWidget->resize(init);
     }
-    g_meterWidget->show();
+    // g_meterWidget->show(); // ドック化するので不要
+    // g_meterWidget->setWindowFlags(...); // ドック化するので不要
 
     // Tools メニューに「Show Master Level Meter」を追加
-    obs_frontend_add_tools_menu_item("Show Master Level Meter", show_meter_menu_cb, nullptr);
+    // obs_frontend_add_tools_menu_item("Show Master Level Meter", show_meter_menu_cb, nullptr);
 
     // Audio connect
     struct obs_audio_info oai = {};
@@ -227,8 +229,9 @@ bool obs_module_load(void) {
         float rmsR = (chs >= 2) ? g_levelCalc.getRMSCh(1) : rmsL;
         float peakL = (chs >= 1) ? g_levelCalc.getPeakCh(0) : g_levelCalc.getPeak();
         float peakR = (chs >= 2) ? g_levelCalc.getPeakCh(1) : peakL;
-        float lufsL = (chs >= 1) ? g_levelCalc.getLUFSMomentaryCh(0) : g_levelCalc.getLUFSMomentary();
-        float lufsR = (chs >= 2) ? g_levelCalc.getLUFSMomentaryCh(1) : lufsL;
+        // LUFSはIIRスムージング後のチャンネル別値を使う
+        float lufsL = (chs >= 1) ? g_levelCalc.getSmoothedLUFSShortCh(0) : g_levelCalc.getSmoothedLUFSShort();
+        float lufsR = (chs >= 2) ? g_levelCalc.getSmoothedLUFSShortCh(1) : lufsL;
         g_meterWidget->updateLevelsLR(rmsL, rmsR, peakL, peakR, lufsL, lufsR);
     });
     g_updateTimer->start(16); // ~60fps
@@ -266,12 +269,7 @@ void obs_module_unload(void) {
         g_audio = nullptr;
     }
     if (g_meterWidget) {
-        // QWidgetのdeleteはUIスレッドでのみ行う
-        if (g_meterWidget->isVisible())
-            g_meterWidget->close();
-        QSettings settings("ha_kondo", "level_meter_plugin");
-        settings.setValue("window/geometry", g_meterWidget->saveGeometry());
-        delete g_meterWidget;
+        // OBSのドックAPIで追加したウィジェットはOBS/Qt側が自動でdeleteするため、手動でdeleteしない
         g_meterWidget = nullptr;
     }
 }
