@@ -18,7 +18,7 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 未確認ですが、Streamlabs OBS でも同様の場所に配置すれば動作すると思われますが動作保証しません。
 **該当場所にdll,pluginを配置後、OBSを再起動してください。**
 
-##Macユーザーへ【重要】
+## Macユーザーへ【重要】
 「Appleがマルウェアの有無を確認できないため、プラグインを開けません」というエラーについて。
 
 macOSにMasterLevelMeter.pluginをインストールする際、次のような警告が表示される場合があります：
