@@ -38,7 +38,7 @@ C:\Program Files\obs-studio\obs-plugins\64bit\MasterLevelMeter.dll
 - K-weighting フィルタ:
 - 二段ハイパス (60Hz) + High-shelf (+4 dB @ ~1.7 kHz) 実装
 - -23 / -18 LUFS 強調目盛り
-- フローティングツールウィンドウ (常に前面)
+- Dock対応
 - Streaming 設定から現在利用されるトラックの表示更新
   
 ---
@@ -207,7 +207,7 @@ Restart OBS after placing the plugin.
 - K-weighting filter:
 - Two-stage high-pass (60 Hz) + high-shelf (+4 dB @ ~1.7 kHz)
 - Emphasis ticks at -23 / -18 LUFS
-- Floating tool window (always on top)
+- Dock compatible
 - Detects and shows which tracks are used for streaming (updates every 1 s)
 ---
 ## Audio Flow
