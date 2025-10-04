@@ -12,6 +12,7 @@ class QCloseEvent;
 class QPushButton;
 class QButtonGroup;
 class QLabel;
+class QTimer;
 
 class MeterWidget : public QWidget {
     Q_OBJECT
@@ -23,6 +24,15 @@ public slots:
     void updateLevelsLR(float rmsL, float rmsR, float peakL, float peakR, float lufsL, float lufsR);
     void setMixIndex(int index);
     void setStreamingTracksMask(uint32_t mask);
+    // LUFS目盛りのオフセットを動的に設定（ピクセル）
+    void setLufsTickOffsets(int offset23Px, int offset18Px);
+    void setLufsTickOffset23(int offset23Px);
+    void setLufsTickOffset18(int offset18Px);
+    // Display smoothing / throttling for numeric labels
+    void setDisplaySmoothingAlpha(double alpha); // 0..1
+    void setUiUpdateIntervalMs(int ms);
+    void setDisplayThresholdDb(double db);
+    void onUiUpdateTimer();
 
 signals:
     void mixIndexChanged(int index);
@@ -51,6 +61,22 @@ private:
     float peakDbR_ = -120.0f;
     float lufsDbL_ = -120.0f;
     float lufsDbR_ = -120.0f;
+    // 追加: チャネルの和（合計）で表示するLUFS
+    float lufsDbCombined_ = -120.0f;
+    // LUFS 目盛りオフセット（ピクセル）: -23 と -18 の目盛り線を下にずらすための微調整値
+    int lufsTickOffset23Px_ = 3; // デフォルト: 3px 下にオフセット
+    int lufsTickOffset18Px_ = 4; // デフォルト: 4px 下にオフセット
+
+    // UI 数値表示の平滑化／更新制御
+    QTimer *uiUpdateTimer_ = nullptr;
+    double displayRmsL_ = -120.0;
+    double displayRmsR_ = -120.0;
+    double displayPeakL_ = -120.0;
+    double displayPeakR_ = -120.0;
+    double displayLufs_ = -120.0;
+    double displaySmoothingAlpha_ = 0.25; // EMA alpha
+    double displayThresholdDb_ = 0.05;   // minimal dB change to trigger update
+    int uiUpdateIntervalMs_ = 120;       // ms (~8Hz)
 
     // 表示用スムージング
     float rmsSmoothDbL_ = -120.0f;

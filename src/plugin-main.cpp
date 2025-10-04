@@ -224,15 +224,16 @@ bool obs_module_load(void) {
     // 更新用タイマー（UIスレッド）: 約60fps
     g_updateTimer = new QTimer();
     QObject::connect(g_updateTimer, &QTimer::timeout, [=]() {
+        // Provide per-channel RMS/Peak (LR-separated) but use combined LUFS for display.
         size_t chs = g_levelCalc.getChannels();
         float rmsL = (chs >= 1) ? g_levelCalc.getRMSCh(0) : g_levelCalc.getRMS();
         float rmsR = (chs >= 2) ? g_levelCalc.getRMSCh(1) : rmsL;
         float peakL = (chs >= 1) ? g_levelCalc.getPeakCh(0) : g_levelCalc.getPeak();
         float peakR = (chs >= 2) ? g_levelCalc.getPeakCh(1) : peakL;
-        // LUFSはIIRスムージング後のチャンネル別値を使う
-        float lufsL = (chs >= 1) ? g_levelCalc.getSmoothedLUFSShortCh(0) : g_levelCalc.getSmoothedLUFSShort();
-        float lufsR = (chs >= 2) ? g_levelCalc.getSmoothedLUFSShortCh(1) : lufsL;
-        g_meterWidget->updateLevelsLR(rmsL, rmsR, peakL, peakR, lufsL, lufsR);
+        // LUFS uses combined (summed) short-term smoothed value so target matches summed loudness
+        float lufsCombined = g_levelCalc.getSmoothedLUFSShort();
+        // updateLevelsLR expects L/R LUFS; pass the same combined value for both so the widget shows a single summed LUFS bar
+        g_meterWidget->updateLevelsLR(rmsL, rmsR, peakL, peakR, lufsCombined, lufsCombined);
     });
     g_updateTimer->start(16); // ~60fps
 
