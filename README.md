@@ -4,6 +4,9 @@
 
 Master の任意トラック (Track1..Track6) のメーター表示と、配信設定で使用される音声マスタートラックの音量が見れるようになります。
 
+## ダウンロード
+https://github.com/ShmKnd/MasterLevelMeter/releases/tag/2025-10-04_v1.0.2
+
 ---
 ## インストール方法
 On macOS:
@@ -202,6 +205,9 @@ A floating window plugin for OBS Studio that displays audio levels: RMS / Peak /
 It also visualizes which audio tracks are currently selected in the streaming (Output) settings.
 
 ---
+## Downloads
+https://github.com/ShmKnd/MasterLevelMeter/releases/tag/2025-10-04_v1.0.2
+
 ## Installation
 macOS:
 ```
