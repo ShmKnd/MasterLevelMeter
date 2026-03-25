@@ -156,17 +156,29 @@ void LevelCalc::process(float **data, uint32_t frames, size_t channels) {
         ++hopSampleCount_;
         if (hopSampleCount_ >= hopSamples_) {
             // 100ms 小ブロック確定
+            // Fix: ms を1回だけ計算し、Momentary / Short の両方に流用する
+            //      (旧: Short用ループで sumSquaresHop_ をリセット後に再計算 → 常に0になっていた)
             for (size_t ch = 0; ch < channels_; ++ch) {
                 double ms = (hopSamples_ > 0)
                                 ? (sumSquaresHop_[ch] / static_cast<double>(hopSamples_))
                                 : 0.0;
                 sumSquaresHop_[ch] = 0.0;
+
+                // --- Momentary (400ms) 用 ---
                 if (recentSubblocks_[ch].size() == 4) {
                     rollingSubSum_[ch] -= recentSubblocks_[ch].front();
                     recentSubblocks_[ch].pop_front();
                 }
                 recentSubblocks_[ch].push_back(ms);
                 rollingSubSum_[ch] += ms;
+
+                // --- Short (3秒) LUFS 用 ---
+                if (recentSubblocksShort_[ch].size() == kShortWindowBlocks) {
+                    rollingSubSumShort_[ch] -= recentSubblocksShort_[ch].front();
+                    recentSubblocksShort_[ch].pop_front();
+                }
+                recentSubblocksShort_[ch].push_back(ms);
+                rollingSubSumShort_[ch] += ms;
             }
 
             // 400ms (4 subblocks) 揃ったら Momentary 計算
@@ -189,18 +201,6 @@ void LevelCalc::process(float **data, uint32_t frames, size_t channels) {
                     lufs_m_ch_[ch].store(static_cast<float>(lufs_m_ch), std::memory_order_relaxed);
                 }
                 // Integrated の蓄積・ゲート処理は削除
-            }
-            // --- Short LUFS用 ---
-            for (size_t ch = 0; ch < channels_; ++ch) {
-                double ms = (hopSamples_ > 0)
-                                ? (sumSquaresHop_[ch] / static_cast<double>(hopSamples_))
-                                : 0.0;
-                if (recentSubblocksShort_[ch].size() == kShortWindowBlocks) {
-                    rollingSubSumShort_[ch] -= recentSubblocksShort_[ch].front();
-                    recentSubblocksShort_[ch].pop_front();
-                }
-                recentSubblocksShort_[ch].push_back(ms);
-                rollingSubSumShort_[ch] += ms;
             }
             // --- Short LUFS計算 ---
             bool haveShortWindow = true;
